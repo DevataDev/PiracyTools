@@ -3,7 +3,7 @@
 ## Description
 ADB automation utility to simplify module usage for advancing interactions with an android device.
 
-## Objectif
+## Objective
 The main objective of this module is to allow advanced use of Android Debug Bridge and certain modules available for android for reverse engineering. The installation and the use of the modules is automated in the script by the appropriate commands generating the read/write permissions necessary for the use of these. Below is a list of commands and descriptions for each module.
 
 
