@@ -27,7 +27,7 @@ The main objective of this module is to allow advanced use of Android Debug Brid
 
 <details><summary>Advanced</summary>
 
-> https://developer.android.com/studio/command-line/adb
+> https://developer.android.com/studio/command-line/adb  
 > Programming tool used for debugging Android-based devices.
 
 | Command                  | Permission | Description                                   |
