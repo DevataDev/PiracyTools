@@ -35,13 +35,14 @@ The main objective of this module is to allow advanced use of Android Debug Brid
 | `ptools adv pkg`         | shell      | Application lists                             |
 | `ptools adv pkg $NAME`   | shell      | Lists apps by name                            |
 | `ptools adv wifi`        | root       | Wifi networks already connected with password |
-| `ptools adv db $PACKAGE` | root       | sqlite3 database of an application            |
+| `ptools adv db $PACKAGE` | root       | SQLite3 database of an application            |
+| `ptools adv switch`      | shell      | Change device without exit                    |
 </details>
 
 ### Planned
 - Download and install ADB automatically
-- Support for error on first server start
 - Automatic interception script generation (native and classic function) with frida
+- Add automatic root tools
 - Any other suggestions
 
 ## Disclaimer

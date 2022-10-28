@@ -2,7 +2,7 @@
 Project: PiracyTools
 File: lib_frida.py
 Author: hyugogirubato
-Date: 2022.10.26
+Date: 2022.10.28
 """
 
 import os
@@ -101,8 +101,7 @@ class Frida:
                                     utils.printWarning('Frida (pip) must be installed')
                                 else:
                                     output = os.path.join('tmp', 'frida-server')
-                                    arch = self.device['abi'].split('-')[0] if '-' in self.device['abi'] else \
-                                    self.device['abi']
+                                    arch = self.device['abi'].split('-')[0] if '-' in self.device['abi'] else self.device['abi']
                                     url = f"https://github.com/frida/frida/releases/download/{self.version}/frida-server-{self.version}-android-{arch}.xz"
                                     file = f"frida-server-{self.version}-{arch}.xz"
                                     if not os.path.exists(os.path.join('tmp', file)):

@@ -110,27 +110,31 @@ def extactFile(input, output, clear=False):
 
 
 def getInput(question: str, type='str', default=None):
-    if not default is None:
-        question += f' [{default}]'
-    answer = str(input(question + ': '))
-    valid = True
-    if answer == '':
+    try:
         if not default is None:
-            answer = default
-        else:
-            valid = False
-    if type == 'int':
-        try:
-            answer = int(answer)
-        except Exception as e:
-            valid = False
-    elif type == 'bool' or type == 'boolean':
-        if answer.lower() in ['y', 'yes', '1', 'true']:
-            answer = True
-        elif answer.lower() in ['n', 'no', '0', 'false']:
-            answer = False
-        else:
-            valid = False
-    if valid:
-        return answer
-    printError('The answer is invalid.', exit=True)
+            question += f' [{default}]'
+        answer = str(input(question + ': '))
+        valid = True
+        if answer == '':
+            if not default is None:
+                answer = default
+            else:
+                valid = False
+        if type == 'int':
+            try:
+                answer = int(answer)
+            except Exception as e:
+                valid = False
+        elif type == 'bool' or type == 'boolean':
+            if answer.lower() in ['y', 'yes', '1', 'true']:
+                answer = True
+            elif answer.lower() in ['n', 'no', '0', 'false']:
+                answer = False
+            else:
+                valid = False
+        if valid:
+            return answer
+        printError('The answer is invalid.', exit=True)
+    except KeyboardInterrupt as e:
+        print('')
+        return None

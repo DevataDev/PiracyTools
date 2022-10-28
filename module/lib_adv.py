@@ -2,7 +2,7 @@
 Project: PiracyTools
 File: lib_adv.py
 Author: hyugogirubato
-Date: 2022.10.26
+Date: 2022.10.28
 """
 
 import json
@@ -18,6 +18,7 @@ ptools adv pkg
 ptools adv pkg $NAME
 ptools adv wifi
 ptools adv db $PACKAGE
+ptools adv switch
 """
 
 

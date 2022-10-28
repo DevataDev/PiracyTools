@@ -2,9 +2,10 @@
 Project: PiracyTools
 File: main.py
 Author: hyugogirubato
-Date: 2022.10.26
+Date: 2022.10.28
 """
 
+import json
 import os
 import re
 import subprocess
@@ -25,8 +26,7 @@ def get_root(device, exit=True):
 def get_devices(exit=True):
     devices = []
     for l in subprocess.getoutput("adb devices").strip().split('\n')[1:]:
-        # TODO: check adb process
-        if l.split('\t')[1] == 'device':
+        if '\t' in l and l.split('\t')[1] == 'device':
             name = l.split('\t')[0]
             properties = {}
             for p in subprocess.getoutput(f"adb -s {name} shell \"getprop\"").strip().split('\n'):
@@ -38,19 +38,19 @@ def get_devices(exit=True):
     if len(devices) == 0:
         utils.printWarning('No device available')
         sys.exit(0)
-    else:
-        utils.printInfo('List of devices attached:')
-        print('{0:<20} {1:10} {2:<10}'.format('Name', 'SDK', 'Architecture'))
-        for device in devices:
-            print('{0:<20} {1:10} {2:<10}'.format(device['name'], device['sdk'], device['abi']))
 
-        r = utils.getInput('\nSelect device?', default=devices[0]['name'], type=str)
-        for i in range(len(devices)):
-            if devices[i]['name'] == r or str(i) == r:
-                return devices[i]
-        utils.printError('The selected device is invalid', exit=exit)
-        if not exit:
-            return None
+    utils.printInfo('List of devices attached:')
+    print('{0:<20} {1:10} {2:<10}'.format('Name', 'SDK', 'Architecture'))
+    for device in devices:
+        print('{0:<20} {1:10} {2:<10}'.format(device['name'], device['sdk'], device['abi']))
+
+    r = utils.getInput('\nSelect device?', default=devices[0]['name'], type=str)
+    for i in range(len(devices)):
+        if devices[i]['name'] == r or str(i) == r:
+            return devices[i]
+    utils.printError('The selected device is invalid', exit=exit)
+    if not exit:
+        return None
 
 
 if __name__ == '__main__':
@@ -81,7 +81,20 @@ if __name__ == '__main__':
                     if tmp_cmd[1] == 'frida':
                         lib_frida.Frida(device, root=root).args(tmp_cmd)
                     elif tmp_cmd[1] == 'adv':
-                        lib_adv.ADV(device, root=root).args(tmp_cmd)
+                        if len(tmp_cmd) == 3 and tmp_cmd[2] == 'switch':
+                            tmp_device = get_devices(exit=False)
+                            if tmp_device is None:
+                                utils.printError('Device not updated', exit=False)
+                            elif json.dumps(tmp_device) == json.dumps(device):
+                                utils.printWarning('Device already used')
+                            else:
+                                device = tmp_device
+                                path = '/'
+                                root = False
+                                hostname = colored(device['name'], 'magenta')
+                                utils.printSuccess('Updated device')
+                        else:
+                            lib_adv.ADV(device, root=root).args(tmp_cmd)
                 else:
                     print(f"sh: {cmd}: Invalid command")
             elif cmd == 'logcat' or cmd.startswith('logcat '):
@@ -110,3 +123,8 @@ if __name__ == '__main__':
         print(e)
         utils.printError('Connection to terminal lost')
     utils.printSuccess('Shell stopped')
+    r = utils.getInput('Select device?', default='no', type='boolean')
+    if r:
+        os.system(f"adb kill-server")
+        utils.printSuccess('ADB stopped')
+    sys.exit(0)
