@@ -123,7 +123,7 @@ if __name__ == '__main__':
         print(e)
         utils.printError('Connection to terminal lost')
     utils.printSuccess('Shell stopped')
-    r = utils.getInput('Select device?', default='no', type='boolean')
+    r = utils.getInput('Stop ADB?', default='no', type='boolean')
     if r:
         os.system(f"adb kill-server")
         utils.printSuccess('ADB stopped')
