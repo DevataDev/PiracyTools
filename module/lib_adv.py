@@ -2,7 +2,7 @@
 Project: PiracyTools
 File: lib_adv.py
 Author: hyugogirubato
-Date: 2022.10.28
+Date: 2022.11.10
 """
 
 import json
@@ -56,7 +56,11 @@ class ADV:
         for p in subprocess.getoutput(f"adb -s {self.device['name']} shell \"pm list packages -f 2>/dev/null\"").strip().split('\n'):
             m = re.match(r"^package\:/(.*?)/.*/(.*?).apk=(.*?)$", p)
             if m:
-                packages.append({'mode': m.group(1), 'name': m.group(2), 'pkg': m.group(3)})
+                mode = m.group(1).strip()
+                name = m.group(2).strip()
+                pkg = m.group(3).strip()
+                if mode != '' and name != '' and pkg != '':
+                    packages.append({'mode': mode, 'name': name, 'pkg': pkg})
         return packages
 
     def args(self, cmd):

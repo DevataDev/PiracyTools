@@ -2,7 +2,7 @@
 Project: PiracyTools
 File: main.py
 Author: hyugogirubato
-Date: 2022.10.28
+Date: 2022.11.10
 """
 
 import json
@@ -95,6 +95,8 @@ if __name__ == '__main__':
                                 utils.printSuccess('Updated device')
                         else:
                             lib_adv.ADV(device, root=root).args(tmp_cmd)
+                    else:
+                        print(f"sh: {cmd}: Invalid command")
                 else:
                     print(f"sh: {cmd}: Invalid command")
             elif cmd == 'logcat' or cmd.startswith('logcat '):
@@ -115,12 +117,15 @@ if __name__ == '__main__':
                     if len(items) == 1:
                         path = items[0]
                     r = '\n'.join(items[1:])
+
                 if r != '':
-                    print(r)
+                    if r in ['error: closed', f"adb.exe: device '{device['name']}' not found"]:
+                        raise Exception('error: closed')
+                    else:
+                        print(r)
     except KeyboardInterrupt as e:
         print('')
     except Exception as e:
-        print(e)
         utils.printError('Connection to terminal lost')
     utils.printSuccess('Shell stopped')
     r = utils.getInput('Stop ADB?', default='no', type='boolean')
