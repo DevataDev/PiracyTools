@@ -29,7 +29,7 @@ class Frida:
         self.root = root
         self.device = device
         self.releases = 'https://github.com/frida/frida/releases'
-        self.version = '15.2.2'  # '15.2.2'  # 12.4.7
+        self.version = '16.0.2'  # 15.2.2, 12.4.7
 
     def _getStatus(self):
         pid = []
@@ -81,7 +81,7 @@ class Frida:
                         utils.printError('Frida is not running', exit=False)
                     else:
                         utils.printSuccess('Bypass SSL pining started')
-                        os.system(f"frida --no-pause -D \"{self.device['name']}\" -l \"{SCRIPT}\" -f \"{cmd[3]}\"")
+                        os.system(f"frida -D \"{self.device['name']}\" -l \"{SCRIPT}\" -f \"{cmd[3]}\"")
                         utils.printSuccess('Bypass SSL pining stopped')
                 elif len(pid) == 0:
                     if len(cmd) == 3 and cmd[2] == 'start':
