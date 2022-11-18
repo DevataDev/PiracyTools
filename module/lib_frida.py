@@ -2,7 +2,7 @@
 Project: PiracyTools
 File: lib_frida.py
 Author: hyugogirubato
-Date: 2022.10.28
+Date: 2022.11.18
 """
 
 import os
@@ -18,9 +18,18 @@ ptools frida uninstall pip
 ptools frida start
 ptools frida stop
 ptools frida pinning $PACKAGE
+ptools frida run $SCRIPT $PACKAGE
 """
 
 SCRIPT = './module/script_frida.js'
+HELPS = [
+    {'command': 'status', 'root': False, 'description': 'Show frida status'},
+    {'command': 'install server|pip', 'root': True, 'description': 'Install frida server|pip'},
+    {'command': 'uninstall server|pip', 'root': True, 'description': 'Uninstall frida server|pip'},
+    {'command': 'start|stop', 'root': True, 'description': 'Start|Stop frida service'},
+    {'command': 'pinning $PACKAGE', 'root': True, 'description': 'Bypass SSL pinning for an application'},
+    {'command': 'run $SCRIPT $PACKAGE', 'root': True, 'description': 'Run a frida personal script'}
+]
 
 
 class Frida:
@@ -29,7 +38,6 @@ class Frida:
         self.root = root
         self.device = device
         self.releases = 'https://github.com/frida/frida/releases'
-        self.version = '16.0.2'  # 15.2.2, 12.4.7
 
     def _getStatus(self):
         pid = []
@@ -67,7 +75,7 @@ class Frida:
                 utils.printError('Frida (server) is not installed', exit=False)
             if not tmp_pip:
                 utils.printError('Frida (pip) is not installed', exit=False)
-        elif cmd[2] in ['start', 'stop', 'install', 'uninstall', 'pinning']:  # require root auth
+        elif cmd[2] in ['start', 'stop', 'install', 'uninstall', 'pinning', 'run']:  # require root auth
             if self.root:
                 if len(cmd) == 3 and cmd[2] == 'stop':
                     if len(pid) == 0:
@@ -83,6 +91,11 @@ class Frida:
                         utils.printSuccess('Bypass SSL pining started')
                         os.system(f"frida -D \"{self.device['name']}\" -l \"{SCRIPT}\" -f \"{cmd[3]}\"")
                         utils.printSuccess('Bypass SSL pining stopped')
+                elif len(cmd) == 5 and cmd[2] == 'run':
+                    if os.path.exists(cmd[3]):
+                        os.system(f"frida -D \"{self.device['name']}\" -l \"{cmd[3]}\" -f \"{cmd[4]}\"")
+                    else:
+                        utils.printError('Frida script not found', exit=False)
                 elif len(pid) == 0:
                     if len(cmd) == 3 and cmd[2] == 'start':
                         subprocess.getoutput(f"adb -s {self.device['name']} shell su -c \\\"setsid ./data/local/tmp/frida-server &>/dev/null &\\\"")
@@ -102,8 +115,9 @@ class Frida:
                                 else:
                                     output = os.path.join('tmp', 'frida-server')
                                     arch = self.device['abi'].split('-')[0] if '-' in self.device['abi'] else self.device['abi']
-                                    url = f"https://github.com/frida/frida/releases/download/{self.version}/frida-server-{self.version}-android-{arch}.xz"
-                                    file = f"frida-server-{self.version}-{arch}.xz"
+                                    version = subprocess.getoutput("frida --version").strip()
+                                    url = f"https://github.com/frida/frida/releases/download/{version}/frida-server-{version}-android-{arch}.xz"
+                                    file = f"frida-server-{version}-{arch}.xz"
                                     if not os.path.exists(os.path.join('tmp', file)):
                                         utils.downloadFile('tmp', file, url)
                                     utils.extactFile(os.path.join('tmp', file), output, clear=False)
@@ -149,5 +163,14 @@ class Frida:
                     print('{0:<10} {1:<10} {2:<30}'.format('User', 'PID', 'Name'))
                     for p in pid:
                         print('{0:<10} {1:<10} {2:<30}'.format(p['user'], p['pid'], p['name']))
+            elif len(cmd) == 3 and cmd[2] == 'help':
+                print('Available commands:')
+                print('{0:<26} {1:<14} {2:<40}'.format('Command', 'Permission', 'Description'))
+                for h in HELPS:
+                    print('{0:<26} {1:<14} {2:<40}'.format(
+                        h['command'],
+                        'root' if h['root'] else 'shell',
+                        h['description']
+                    ))
             else:
                 print(f"sh: {' '.join(cmd)}: Invalid command")

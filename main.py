@@ -2,7 +2,7 @@
 Project: PiracyTools
 File: main.py
 Author: hyugogirubato
-Date: 2022.11.10
+Date: 2022.11.18
 """
 
 import json
@@ -13,6 +13,11 @@ import sys
 from termcolor import colored
 import utils
 from module import lib_frida, lib_adv
+
+HELPS = [
+    {'command': 'adv', 'description': 'Advanced commands'},
+    {'command': 'frida', 'description': 'Dynamic instrumentation'}
+]
 
 
 def get_root(device, exit=True):
@@ -97,6 +102,14 @@ if __name__ == '__main__':
                             lib_adv.ADV(device, root=root).args(tmp_cmd)
                     else:
                         print(f"sh: {cmd}: Invalid command")
+                elif len(tmp_cmd) == 2 and tmp_cmd[1] == 'help':
+                    print('Available commands:')
+                    print('{0:<26} {1:<40}'.format('Command', 'Description'))
+                    for h in HELPS:
+                        print('{0:<26} {1:<40}'.format(
+                            h['command'],
+                            h['description']
+                        ))
                 else:
                     print(f"sh: {cmd}: Invalid command")
             elif cmd == 'logcat' or cmd.startswith('logcat '):

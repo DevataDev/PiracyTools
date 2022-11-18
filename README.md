@@ -13,16 +13,17 @@ The main objective of this module is to allow advanced use of Android Debug Brid
 > https://frida.re/  
 > Dynamic instrumentation toolkit for developers, reverse-engineers, and security researchers.
 
-| Command                         | Permission | Description                           |
-|:-------------------------------:|:----------:|:-------------------------------------:|
-| `ptools frida status`           | shell      | Show frida status                     |
-| `ptools frida install server`   | root       | Install frida server                  |
-| `ptools frida install pip`      | root       | Install frida pip                     |
-| `ptools frida uninstall server` | root       | Uninstall frida server                |
-| `ptools frida uninstall pip`    | root       | Uninstall frida pip                   |
-| `ptools frida start`            | root       | Start frida service                   |
-| `ptools frida stop`             | root       | stop frida service                    |
-| `ptools frida pinning $PACKAGE` | root       | Bypass SSL pinning for an application |
+| Command                             | Permission | Description                           |
+|:-----------------------------------:|:----------:|:-------------------------------------:|
+| `ptools frida status`               | shell      | Show frida status                     |
+| `ptools frida install server`       | root       | Install frida server                  |
+| `ptools frida install pip`          | root       | Install frida pip                     |
+| `ptools frida uninstall server`     | root       | Uninstall frida server                |
+| `ptools frida uninstall pip`        | root       | Uninstall frida pip                   |
+| `ptools frida start`                | root       | Start frida service                   |
+| `ptools frida stop`                 | root       | Stop frida service                    |
+| `ptools frida pinning $PACKAGE`     | root       | Bypass SSL pinning for an application |
+| `ptools frida run $SCRIPT $PACKAGE` | root       | Run a frida personal script           |
 </details>
 
 <details><summary>Advanced</summary>

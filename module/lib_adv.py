@@ -2,7 +2,7 @@
 Project: PiracyTools
 File: lib_adv.py
 Author: hyugogirubato
-Date: 2022.11.10
+Date: 2022.11.18
 """
 
 import json
@@ -20,6 +20,14 @@ ptools adv wifi
 ptools adv db $PACKAGE
 ptools adv switch
 """
+
+HELPS = [
+    {'command': 'pkg', 'root': False, 'description': 'Application lists'},
+    {'command': 'pkg $NAME', 'root': False, 'description': 'Lists apps by name'},
+    {'command': 'wifi', 'root': True, 'description': 'Wifi networks already connected with password'},
+    {'command': 'db $PACKAGE', 'root': True, 'description': 'SQLite3 database of an application'},
+    {'command': 'switch', 'root': False, 'description': 'Change device without exit'}
+]
 
 
 def _get_network(data, mode='xml'):
@@ -166,5 +174,14 @@ class ADV:
                         print('{0:<20} {1:50} {2:<50}'.format('Mode', 'Name', 'Package'))
                         for p in packages:
                             print('{0:<20} {1:50} {2:<50}'.format(p['mode'], p['name'], p['pkg']))
+            elif len(cmd) == 3 and cmd[2] == 'help':
+                print('Available commands:')
+                print('{0:<26} {1:<14} {2:<40}'.format('Command', 'Permission', 'Description'))
+                for h in HELPS:
+                    print('{0:<26} {1:<14} {2:<40}'.format(
+                        h['command'],
+                        'root' if h['root'] else 'shell',
+                        h['description']
+                    ))
             else:
                 print(f"sh: {' '.join(cmd)}: Invalid command")
