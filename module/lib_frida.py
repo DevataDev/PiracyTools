@@ -213,8 +213,8 @@ class Frida:
                         result.append(f"                    console.log(`  --> arg{i}:  $" + "{" + f"arg{i}" + "}`);")
                     content = content.replace('{FUNCTION_CONSOLE_ARGS}', '\n'.join(result))
                 file = f"{int(time.time())}_frida_{'native_function' if is_native else 'function'}.js"
-                utils.saveFile(os.getcwd(), file, content.encode('utf-8'))
-                utils.printInfo(f"File saved at: {os.path.join(os.getcwd(), file)}")
+                utils.saveFile('tmp', file, content.encode('utf-8'))
+                utils.printInfo(f"File saved at: {os.path.join('tmp', file)}")
             elif len(cmd) == 3 and cmd[2] == 'help':
                 print('Available commands:')
                 print('{0:<26} {1:<14} {2:<40}'.format('Command', 'Permission', 'Description'))

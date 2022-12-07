@@ -2,7 +2,7 @@
 Project: PiracyTools
 File: lib_adv.py
 Author: hyugogirubato
-Date: 2022.11.18
+Date: 2022.12.07
 """
 
 import json
@@ -19,6 +19,7 @@ ptools adv pkg $NAME
 ptools adv wifi
 ptools adv db $PACKAGE
 ptools adv switch
+ptools adv root
 """
 
 HELPS = [
@@ -26,7 +27,8 @@ HELPS = [
     {'command': 'pkg $NAME', 'root': False, 'description': 'Lists apps by name'},
     {'command': 'wifi', 'root': True, 'description': 'Wifi networks already connected with password'},
     {'command': 'db $PACKAGE', 'root': True, 'description': 'SQLite3 database of an application'},
-    {'command': 'switch', 'root': False, 'description': 'Change device without exit'}
+    {'command': 'switch', 'root': False, 'description': 'Change device without exit'},
+    {'command': 'root', 'root': False, 'description': 'Check root compatibility (CVE-2022-0847)'}
 ]
 
 
@@ -174,6 +176,17 @@ class ADV:
                         print('{0:<20} {1:50} {2:<50}'.format('Mode', 'Name', 'Package'))
                         for p in packages:
                             print('{0:<20} {1:50} {2:<50}'.format(p['mode'], p['name'], p['pkg']))
+            elif len(cmd) == 3 and cmd[2] == 'root':
+                # https://github.com/polygraphene/DirtyPipe-Android (CVE-2022-0847)
+                file = 'DirtyPipeRoot_2.2.apk'
+                if not os.path.exists(os.path.join('tmp', file)):
+                    utils.downloadFile('tmp', file, 'https://github.com/tiann/DirtyPipeRoot/releases/download/v2.2/DirtyPipeRoot_2.2.apk')
+
+                subprocess.getoutput(f"adb -s {self.device['name']} shell monkey -p me.weishu.dirtypipecheck -c android.intent.category.LAUNCHER 1").strip()
+                size = subprocess.getoutput(f"adb -s {self.device['name']} shell wm size").strip().split(':')[1].strip()
+                height = int(size.split('x')[0]) / 2
+                width = int(size.split('x')[1]) / 2
+                os.system(f"adb -s {self.device['name']} shell input tap {height} {width}")
             elif len(cmd) == 3 and cmd[2] == 'help':
                 print('Available commands:')
                 print('{0:<26} {1:<14} {2:<40}'.format('Command', 'Permission', 'Description'))

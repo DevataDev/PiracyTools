@@ -39,10 +39,10 @@ The main objective of this module is to allow advanced use of Android Debug Brid
 | `ptools adv wifi`        | root       | Wifi networks already connected with password |
 | `ptools adv db $PACKAGE` | root       | SQLite3 database of an application            |
 | `ptools adv switch`      | shell      | Change device without exit                    |
+| `ptools adv root`        | shell      | Check root compatibility (CVE-2022-0847)      |
 </details>
 
 ### Planned
-- Add automatic root tools
 - Any other suggestions
 
 ## Disclaimer
