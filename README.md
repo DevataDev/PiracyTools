@@ -43,7 +43,6 @@ The main objective of this module is to allow advanced use of Android Debug Brid
 
 ### Planned
 - Download and install ADB automatically
-- Automatic interception script generation (native and classic function) with frida
 - Add automatic root tools
 - Any other suggestions
 
