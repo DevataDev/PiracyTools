@@ -2,11 +2,12 @@
 Project: PiracyTools
 File: lib_frida.py
 Author: hyugogirubato
-Date: 2022.11.18
+Date: 2022.12.07
 """
 
 import os
 import subprocess
+import time
 import utils
 
 """ Commands
@@ -19,16 +20,18 @@ ptools frida start
 ptools frida stop
 ptools frida pinning $PACKAGE
 ptools frida run $SCRIPT $PACKAGE
+ptools frida create
 """
 
-SCRIPT = './module/script_frida.js'
+PATH_SCRIPTS = os.path.join('module', 'frida_scripts')
 HELPS = [
     {'command': 'status', 'root': False, 'description': 'Show frida status'},
     {'command': 'install server|pip', 'root': True, 'description': 'Install frida server|pip'},
     {'command': 'uninstall server|pip', 'root': True, 'description': 'Uninstall frida server|pip'},
     {'command': 'start|stop', 'root': True, 'description': 'Start|Stop frida service'},
     {'command': 'pinning $PACKAGE', 'root': True, 'description': 'Bypass SSL pinning for an application'},
-    {'command': 'run $SCRIPT $PACKAGE', 'root': True, 'description': 'Run a frida personal script'}
+    {'command': 'run $SCRIPT $PACKAGE', 'root': True, 'description': 'Run a frida personal script'},
+    {'command': 'create', 'root': False, 'description': 'Native and classic function interception script creation'}
 ]
 
 
@@ -89,7 +92,7 @@ class Frida:
                         utils.printError('Frida is not running', exit=False)
                     else:
                         utils.printSuccess('Bypass SSL pining started')
-                        os.system(f"frida -D \"{self.device['name']}\" -l \"{SCRIPT}\" -f \"{cmd[3]}\"")
+                        os.system(f"frida -D \"{self.device['name']}\" -l \"{os.path.join(PATH_SCRIPTS, 'ssl_pinning.js')}\" -f \"{cmd[3]}\"")
                         utils.printSuccess('Bypass SSL pining stopped')
                 elif len(cmd) == 5 and cmd[2] == 'run':
                     if os.path.exists(cmd[3]):
@@ -163,6 +166,55 @@ class Frida:
                     print('{0:<10} {1:<10} {2:<30}'.format('User', 'PID', 'Name'))
                     for p in pid:
                         print('{0:<10} {1:<10} {2:<30}'.format(p['user'], p['pid'], p['name']))
+            elif len(cmd) == 3 and cmd[2] == 'create':
+                is_native = utils.getInput('Native library?', default='no', type='boolean')
+                if is_native:
+                    content = utils.getFileContent(os.path.join(PATH_SCRIPTS, 'native_function.js')).decode('utf-8')
+                    nv_lib_name = utils.getInput('Library name?', default='Crypto', type='str')
+                    nv_lib_module = utils.getInput('Module name?', default='Hash', type='str')
+                    nv_lib_count = utils.getInput('Arguments count?', default=2, type='int')
+                    content = content.replace('{NATIVE_LIBRARY_NAME}', nv_lib_name)
+                    content = content.replace('{NATIVE_MODULE_NAME}', nv_lib_module)
+                    content = content.replace('{NATIVE_ARGS_COUNT}', str(nv_lib_count))
+                else:
+                    content = utils.getFileContent(os.path.join(PATH_SCRIPTS, 'function.js')).decode('utf-8')
+                    fc_class_name = utils.getInput('Class name?', default='MainActivity', type='str')
+                    fc_name = utils.getInput('Function name?', default='Display', type='str')
+                    fc_args_count = utils.getInput('Arguments count?', default=2, type='int')
+                    fc_args = []
+                    fc_types = []
+                    for i in range(fc_args_count):
+                        fc_type = utils.getInput(f"Argument {i} type?", default='java.lang.String', type='str')
+                        if fc_type.lower() in ['str', 'string']:
+                            fc_type = '"java.lang.String"'
+                        elif fc_type.lower() in ['integer', 'int']:
+                            fc_type = '"java.lang.Integer"'
+                        elif fc_type.lower() in ['bool', 'boolean']:
+                            fc_type = '"java.lang.Boolean"'
+                        elif fc_type.lower() in ['byte']:
+                            fc_type = '"java.lang.Byte"'
+                        elif fc_type.lower() in ['double']:
+                            fc_type = '"java.lang.Double"'
+                        elif fc_type.lower() in ['float']:
+                            fc_type = '"java.lang.Float"'
+                        elif fc_type.lower() in ['long']:
+                            fc_type = '"long"'
+                        else:
+                            fc_type = f'"{fc_type}"'
+                        fc_types.append(fc_type)
+                        fc_args.append(f"arg{i}")
+
+                    content = content.replace('{FUNCTION_CLASS_NAME}', fc_class_name)
+                    content = content.replace('{FUNCTION_NAME}', fc_name)
+                    content = content.replace('{FUNCTION_ARGS_TYPE}', ', '.join(fc_types))
+                    content = content.replace('{FUNCTION_ARGS}', ', '.join(fc_args))
+                    result = []
+                    for i in range(fc_args_count):
+                        result.append(f"                    console.log(`  --> arg{i}:  $" + "{" + f"arg{i}" + "}`);")
+                    content = content.replace('{FUNCTION_CONSOLE_ARGS}', '\n'.join(result))
+                file = f"{int(time.time())}_frida_{'native_function' if is_native else 'function'}.js"
+                utils.saveFile(os.getcwd(), file, content.encode('utf-8'))
+                utils.printInfo(f"File saved at: {os.path.join(os.getcwd(), file)}")
             elif len(cmd) == 3 and cmd[2] == 'help':
                 print('Available commands:')
                 print('{0:<26} {1:<14} {2:<40}'.format('Command', 'Permission', 'Description'))

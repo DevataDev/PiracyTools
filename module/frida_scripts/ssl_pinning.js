@@ -4,7 +4,7 @@
  * - https://codeshare.frida.re/@akabe1/frida-multiple-unpinning/
  * - https://codeshare.frida.re/@avltree9798/universal-android-ssl-pinning-bypass/
  * - https://pastebin.com/TVJD63uM
- * - frida --no-pause -U -l ./frida-script.js -f $TARGET_PACKAGE_NAME
+ * - frida -U -l ./frida_ssl_pinning.js -f $TARGET_PACKAGE_NAME
  */
 
 setTimeout(function () {
