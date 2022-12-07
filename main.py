@@ -2,7 +2,7 @@
 Project: PiracyTools
 File: main.py
 Author: hyugogirubato
-Date: 2022.11.18
+Date: 2022.12.07
 """
 
 import json
@@ -29,6 +29,16 @@ def get_root(device, exit=True):
 
 
 def get_devices(exit=True):
+    # check exist
+    try:
+        subprocess.run(['adb', '--version'], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    except Exception as e:
+        file = 'platform-tools.zip'
+        if not os.path.exists(os.path.join('tmp', file)):
+            utils.downloadFile('tmp', file, 'https://dl.google.com/android/repository/platform-tools-latest-windows.zip')
+        utils.printInfo('Extract the folder and add it to the path: https://www.xda-developers.com/adb-fastboot-any-directory-windows-linux/')
+        sys.exit(0)
+
     devices = []
     for l in subprocess.getoutput("adb devices").strip().split('\n')[1:]:
         if '\t' in l and l.split('\t')[1] == 'device':

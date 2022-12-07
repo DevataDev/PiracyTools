@@ -42,7 +42,6 @@ The main objective of this module is to allow advanced use of Android Debug Brid
 </details>
 
 ### Planned
-- Download and install ADB automatically
 - Add automatic root tools
 - Any other suggestions
 
