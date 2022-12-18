@@ -2,7 +2,7 @@
 Project: PiracyTools
 File: lib_frida.py
 Author: hyugogirubato
-Date: 2022.12.07
+Date: 2022.12.18
 """
 
 import os
@@ -18,7 +18,7 @@ ptools frida uninstall server
 ptools frida uninstall pip
 ptools frida start
 ptools frida stop
-ptools frida pinning $PACKAGE
+ptools frida pinning $PACKAGE $VERSION
 ptools frida run $SCRIPT $PACKAGE
 ptools frida create
 """
@@ -29,7 +29,7 @@ HELPS = [
     {'command': 'install server|pip', 'root': True, 'description': 'Install frida server|pip'},
     {'command': 'uninstall server|pip', 'root': True, 'description': 'Uninstall frida server|pip'},
     {'command': 'start|stop', 'root': True, 'description': 'Start|Stop frida service'},
-    {'command': 'pinning $PACKAGE', 'root': True, 'description': 'Bypass SSL pinning for an application'},
+    {'command': 'pinning $PACKAGE $VERSION', 'root': True, 'description': 'Bypass SSL pinning for an application'},
     {'command': 'run $SCRIPT $PACKAGE', 'root': True, 'description': 'Run a frida personal script'},
     {'command': 'create', 'root': False, 'description': 'Native and classic function interception script creation'}
 ]
@@ -87,74 +87,84 @@ class Frida:
                         for p in pid:
                             subprocess.getoutput(f"adb -s {self.device['name']} shell su -c \\\"kill -9 {p['pid']}\\\"")
                         utils.printSuccess('Frida stopped') if len(self._getStatus()) == 0 else utils.printError('Frida failed to stop', exit=False)
-                elif len(cmd) == 4 and cmd[2] == 'pinning':
+                elif (len(cmd) == 4 or len(cmd) == 5) and cmd[2] == 'pinning':
                     if len(pid) == 0:
                         utils.printError('Frida is not running', exit=False)
                     else:
-                        utils.printSuccess('Bypass SSL pining started')
-                        os.system(f"frida -D \"{self.device['name']}\" -l \"{os.path.join(PATH_SCRIPTS, 'ssl_pinning.js')}\" -f \"{cmd[3]}\"")
-                        utils.printSuccess('Bypass SSL pining stopped')
+                        version = None
+                        if len(cmd) == 5:
+                            if not cmd[4] in ['1', '2']:
+                                utils.printError('Version number is incorrect', exit=False)
+                            else:
+                                version = cmd[4]
+                        else:
+                            version = '1'
+                        if not version is None:
+                            utils.printSuccess('Bypass SSL pining started')
+                            os.system(f"frida -D \"{self.device['name']}\" -l \"{os.path.join(PATH_SCRIPTS, f'pinning_v{version}.js')}\" -f \"{cmd[3]}\"")
+                            utils.printSuccess('Bypass SSL pining stopped')
                 elif len(cmd) == 5 and cmd[2] == 'run':
                     if os.path.exists(cmd[3]):
                         os.system(f"frida -D \"{self.device['name']}\" -l \"{cmd[3]}\" -f \"{cmd[4]}\"")
                     else:
                         utils.printError('Frida script not found', exit=False)
-                elif len(pid) == 0:
-                    if len(cmd) == 3 and cmd[2] == 'start':
-                        subprocess.getoutput(f"adb -s {self.device['name']} shell su -c \\\"setsid ./data/local/tmp/frida-server &>/dev/null &\\\"")
-                        utils.printError('Frida failed to start', exit=False) if len(self._getStatus()) == 0 else utils.printSuccess('Frida started')
-                    elif len(cmd) == 4 and cmd[2] == 'install':
-                        if cmd[3] == 'pip':
-                            if not self._getFrida(mode='pip'):
-                                os.system("pip install frida-tools")
-                                os.system("pip install python-xz")
-                                utils.printSuccess('Frida (pip) is installed') if self._getFrida(mode='pip') else utils.printError('Frida (pip) is not installed', exit=False)
-                            else:
-                                utils.printWarning('Frida (pip) is already installed')
-                        elif cmd[3] == 'server':
-                            if not self._getFrida(mode='server'):
+                elif cmd[2] in ['start', 'install', 'uninstall']:
+                    if len(pid) == 0:
+                        if len(cmd) == 3 and cmd[2] == 'start':
+                            subprocess.getoutput(f"adb -s {self.device['name']} shell su -c \\\"setsid ./data/local/tmp/frida-server &>/dev/null &\\\"")
+                            utils.printError('Frida failed to start', exit=False) if len(self._getStatus()) == 0 else utils.printSuccess('Frida started')
+                        elif len(cmd) == 4 and cmd[2] == 'install':
+                            if cmd[3] == 'pip':
                                 if not self._getFrida(mode='pip'):
-                                    utils.printWarning('Frida (pip) must be installed')
+                                    os.system("pip install frida-tools")
+                                    os.system("pip install python-xz")
+                                    utils.printSuccess('Frida (pip) is installed') if self._getFrida(mode='pip') else utils.printError('Frida (pip) is not installed', exit=False)
                                 else:
-                                    output = os.path.join('tmp', 'frida-server')
-                                    arch = self.device['abi'].split('-')[0] if '-' in self.device['abi'] else self.device['abi']
-                                    version = subprocess.getoutput("frida --version").strip()
-                                    url = f"https://github.com/frida/frida/releases/download/{version}/frida-server-{version}-android-{arch}.xz"
-                                    file = f"frida-server-{version}-{arch}.xz"
-                                    if not os.path.exists(os.path.join('tmp', file)):
-                                        utils.downloadFile('tmp', file, url)
-                                    utils.extactFile(os.path.join('tmp', file), output, clear=False)
-                                    if not os.path.exists(output):
-                                        utils.printError('The required file does not exist', exit=True)
+                                    utils.printWarning('Frida (pip) is already installed')
+                            elif cmd[3] == 'server':
+                                if not self._getFrida(mode='server'):
+                                    if not self._getFrida(mode='pip'):
+                                        utils.printWarning('Frida (pip) must be installed')
+                                    else:
+                                        output = os.path.join('tmp', 'frida-server')
+                                        arch = self.device['abi'].split('-')[0] if '-' in self.device['abi'] else self.device['abi']
+                                        version = subprocess.getoutput("frida --version").strip()
+                                        url = f"https://github.com/frida/frida/releases/download/{version}/frida-server-{version}-android-{arch}.xz"
+                                        file = f"frida-server-{version}-{arch}.xz"
+                                        if not os.path.exists(os.path.join('tmp', file)):
+                                            utils.downloadFile('tmp', file, url)
+                                        utils.extactFile(os.path.join('tmp', file), output, clear=False)
+                                        if not os.path.exists(output):
+                                            utils.printError('The required file does not exist', exit=True)
 
-                                    os.system(f"adb -s {self.device['name']} push \"{output}\" \"/data/local/tmp/frida-server\"")
-                                    subprocess.getoutput(f"adb -s {self.device['name']} shell su -c \\\"chmod 755 '/data/local/tmp/frida-server'\\\"")
-                                utils.printSuccess('Frida (server) is installed') if self._getFrida(mode='server') else utils.printError('Frida (server) is not installed', exit=False)
+                                        os.system(f"adb -s {self.device['name']} push \"{output}\" \"/data/local/tmp/frida-server\"")
+                                        subprocess.getoutput(f"adb -s {self.device['name']} shell su -c \\\"chmod 755 '/data/local/tmp/frida-server'\\\"")
+                                    utils.printSuccess('Frida (server) is installed') if self._getFrida(mode='server') else utils.printError('Frida (server) is not installed', exit=False)
+                                else:
+                                    utils.printWarning('Frida (server) is already installed')
                             else:
-                                utils.printWarning('Frida (server) is already installed')
-                        else:
-                            utils.printError('Frida module invalid', exit=False)
-                    elif len(cmd) == 4 and cmd[2] == 'uninstall':
-                        if cmd[3] == 'pip':
-                            if self._getFrida(mode='pip'):
-                                os.system("pip uninstall frida-tools")
-                                os.system("pip uninstall python-xz")
-                                utils.printSuccess('Frida (pip) is uninstalled') if not self._getFrida(mode='pip') else utils.printError('Frida (pip) is not uninstalled', exit=False)
+                                utils.printError('Frida module invalid', exit=False)
+                        elif len(cmd) == 4 and cmd[2] == 'uninstall':
+                            if cmd[3] == 'pip':
+                                if self._getFrida(mode='pip'):
+                                    os.system("pip uninstall frida-tools")
+                                    os.system("pip uninstall python-xz")
+                                    utils.printSuccess('Frida (pip) is uninstalled') if not self._getFrida(mode='pip') else utils.printError('Frida (pip) is not uninstalled', exit=False)
+                                else:
+                                    utils.printWarning('Frida (pip) is not installed')
+                            elif cmd[3] == 'server':
+                                if self._getFrida(mode='server'):
+                                    subprocess.getoutput(f"adb -s {self.device['name']} shell su -c \\\"rm '/data/local/tmp/frida-server'\\\"")
+                                    subprocess.getoutput(f"adb -s {self.device['name']} shell su -c \\\"rm -r '/data/local/tmp/re.frida.server'\\\"")
+                                    utils.printSuccess('Frida (server) is uninstalled') if not self._getFrida(mode='server') else utils.printError('Frida (server) is not uninstalled', exit=False)
+                                else:
+                                    utils.printWarning('Frida (server) is not installed')
                             else:
-                                utils.printWarning('Frida (pip) is not installed')
-                        elif cmd[3] == 'server':
-                            if self._getFrida(mode='server'):
-                                subprocess.getoutput(f"adb -s {self.device['name']} shell su -c \\\"rm '/data/local/tmp/frida-server'\\\"")
-                                subprocess.getoutput(f"adb -s {self.device['name']} shell su -c \\\"rm -r '/data/local/tmp/re.frida.server'\\\"")
-                                utils.printSuccess('Frida (server) is uninstalled') if not self._getFrida(mode='server') else utils.printError('Frida (server) is not uninstalled', exit=False)
-                            else:
-                                utils.printWarning('Frida (server) is not installed')
-                        else:
-                            utils.printError('Frida module invalid', exit=False)
+                                utils.printError('Frida module invalid', exit=False)
                     else:
-                        print(f"sh: {' '.join(cmd)}: Invalid command")
+                        utils.printWarning('Frida already running')
                 else:
-                    utils.printWarning('Frida already running')
+                    print(f"sh: {' '.join(cmd)}: Invalid command")
             else:
                 utils.printError('Root permission required', exit=False)
         else:
@@ -187,7 +197,7 @@ class Frida:
                         fc_type = utils.getInput(f"Argument {i} type?", default='java.lang.String', type='str')
                         if fc_type.lower() in ['str', 'string']:
                             fc_type = '"java.lang.String"'
-                        elif fc_type.lower() in ['integer', 'int']:
+                        elif fc_type.lower() in ['integer']:
                             fc_type = '"java.lang.Integer"'
                         elif fc_type.lower() in ['bool', 'boolean']:
                             fc_type = '"java.lang.Boolean"'
